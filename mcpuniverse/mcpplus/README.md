@@ -38,6 +38,7 @@ mcp-build-plus --mcp-config ~/.cursor/mcp.json [OPTIONS]
 |--------|-------------|---------|
 | `--mcp-config` | Path to your mcp.json config file | Required |
 | `--servers` | Specific server names to wrap (space-separated) | All servers |
+| `--llm-provider` | LLM provider: openai, gemini, anthropic, etc. | `openai` |
 | `--llm-model` | LLM model for post-processing | `gpt-4.1` |
 | `--llm-api-key-env` | Environment variable name for API key | `OPENAI_API_KEY` |
 | `--token-threshold` | Min tokens to trigger post-processing | `500` |
@@ -49,6 +50,18 @@ mcp-build-plus --mcp-config ~/.cursor/mcp.json [OPTIONS]
 ```bash
 # Wrap specific servers with custom threshold
 mcp-build-plus --mcp-config ~/.cursor/mcp.json --servers finance weather --token-threshold 500
+
+# Use Gemini instead of OpenAI
+mcp-build-plus --mcp-config ~/.cursor/mcp.json \
+  --llm-provider gemini \
+  --llm-model gemini-1.5-pro \
+  --llm-api-key-env GOOGLE_API_KEY
+
+# Use Anthropic
+mcp-build-plus --mcp-config ~/.cursor/mcp.json \
+  --llm-provider anthropic \
+  --llm-model claude-sonnet-4-20250514 \
+  --llm-api-key-env ANTHROPIC_API_KEY
 
 # Preview changes without applying
 mcp-build-plus --mcp-config ~/.cursor/mcp.json --dry-run
@@ -87,5 +100,4 @@ See [docs/mcp-plus.md](../../docs/mcp-plus.md) for full documentation.
 
 ## Next steps
 
-- Support other LLM vendors for MCP+ agent besides OpenAI
 - Test with remote MCP servers

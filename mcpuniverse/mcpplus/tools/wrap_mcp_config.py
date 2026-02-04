@@ -9,7 +9,8 @@ This will:
 - Add <server>-plus entries to your mcp.json
 - Store proxy configs in ~/.mcpplus/configs/
 
-Requires OPENAI_API_KEY environment variable to be set.
+Requires an LLM API key environment variable to be set (default: OPENAI_API_KEY).
+Supports multiple LLM providers: openai, gemini, anthropic, etc.
 """
 
 from __future__ import annotations
@@ -49,6 +50,7 @@ def _build_proxy_config(
     command: str,
     args: List[str],
     env: Optional[Dict[str, str]] = None,
+    llm_provider: str = "openai",
     llm_model: str = "gpt-4.1",
     llm_api_key_env: str = "OPENAI_API_KEY",
     token_threshold: int = 500,
@@ -64,7 +66,7 @@ def _build_proxy_config(
         "upstream_args": args,
         "upstream_env": env or {},
         "llm": {
-            "name": "openai",
+            "name": llm_provider,
             "config": {
                 "model_name": llm_model,
                 "api_key": f"${llm_api_key_env}",
@@ -135,6 +137,7 @@ def _prompt_confirmation(message: str = "Proceed?") -> bool:
 def _prepare_wrap_changes(
     mcp_config_path: Path,
     servers: Optional[List[str]] = None,
+    llm_provider: str = "openai",
     llm_model: str = "gpt-4.1",
     llm_api_key_env: str = "OPENAI_API_KEY",
     token_threshold: int = 500,
@@ -202,6 +205,7 @@ def _prepare_wrap_changes(
             command=command,
             args=args,
             env=env,
+            llm_provider=llm_provider,
             llm_model=llm_model,
             llm_api_key_env=llm_api_key_env,
             token_threshold=token_threshold,
@@ -228,6 +232,7 @@ def _prepare_wrap_changes(
 def wrap_servers(
     mcp_config_path: Path,
     servers: Optional[List[str]] = None,
+    llm_provider: str = "openai",
     llm_model: str = "gpt-4.1",
     llm_api_key_env: str = "OPENAI_API_KEY",
     token_threshold: int = 500,
@@ -241,6 +246,7 @@ def wrap_servers(
     Args:
         mcp_config_path: Path to the mcp.json file
         servers: List of server names to wrap (None = all)
+        llm_provider: LLM provider name (openai, gemini, anthropic, etc.)
         llm_model: LLM model to use for post-processing
         llm_api_key_env: Environment variable name for API key
         token_threshold: Min tokens to trigger post-processing
@@ -255,6 +261,7 @@ def wrap_servers(
     full_config, new_entries, proxy_configs, api_key_value = _prepare_wrap_changes(
         mcp_config_path=mcp_config_path,
         servers=servers,
+        llm_provider=llm_provider,
         llm_model=llm_model,
         llm_api_key_env=llm_api_key_env,
         token_threshold=token_threshold,
@@ -295,7 +302,8 @@ def wrap_servers(
     print("  Each '-plus' server wraps the original server with intelligent")
     print("  output filtering. Long tool outputs are processed by an LLM to")
     print("  extract only the information relevant to your query.")
-    print(f"\n  LLM Model: {llm_model}")
+    print(f"\n  LLM Provider: {llm_provider}")
+    print(f"  LLM Model: {llm_model}")
     print(f"  Token Threshold: {token_threshold} (outputs shorter than this pass through)")
 
     if dry_run:
@@ -345,6 +353,11 @@ def parse_args() -> argparse.Namespace:
         help="Specific server names to wrap (default: all)",
     )
     parser.add_argument(
+        "--llm-provider",
+        default="openai",
+        help="LLM provider: openai, gemini, anthropic, etc. (default: openai)",
+    )
+    parser.add_argument(
         "--llm-model",
         default="gpt-4.1",
         help="LLM model for post-processing (default: gpt-4.1)",
@@ -391,6 +404,7 @@ def main() -> None:
     wrap_servers(
         mcp_config_path=mcp_config_path,
         servers=args.servers,
+        llm_provider=args.llm_provider,
         llm_model=args.llm_model,
         llm_api_key_env=args.llm_api_key_env,
         token_threshold=args.token_threshold,
